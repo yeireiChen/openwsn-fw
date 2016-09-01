@@ -240,7 +240,6 @@ PORT_RADIOTIMER_WIDTH radiotimer_getCapturedTime() {
 
 kick_scheduler_t radiotimer_isr() {
     PORT_RADIOTIMER_WIDTH interrupt_flag = RFTIMER_REG__INT;
-    debugpins_isr_set();
 #ifdef SLOT_FSM_IMPLEMENTATION_MULTIPLE_TIMER_INTERRUPT
     if (
         interrupt_flag & RFTIMER_REG__INT_COMPARE2_INT  ||
@@ -262,7 +261,6 @@ kick_scheduler_t radiotimer_isr() {
             }
             // call the callback
             radiotimer_vars.compare_cb();
-            debugpins_isr_clr();
             // kick the OS
             return KICK_SCHEDULER;
         }
@@ -274,7 +272,6 @@ kick_scheduler_t radiotimer_isr() {
                 // clear the interrupt bit and call the callback
                 RFTIMER_REG__INT_CLEAR  = RFTIMER_REG__INT_COMPARE1_INT;
                 radiotimer_vars.overflow_cb();
-                debugpins_isr_clr();
                 // kick the OS
                 return KICK_SCHEDULER;
             }
@@ -285,7 +282,6 @@ kick_scheduler_t radiotimer_isr() {
                 // clear the interrupt bit and call the callback
                 RFTIMER_REG__INT_CLEAR  = RFTIMER_REG__INT_COMPARE0_INT;
                 bsp_timer_isr();
-                debugpins_isr_clr();
                 // kick the OS
                 return KICK_SCHEDULER;
             } else {
@@ -307,7 +303,6 @@ kick_scheduler_t radiotimer_isr() {
                         }
                     }
                 }
-                debugpins_isr_clr();
                 return KICK_SCHEDULER;
             }
         }
@@ -319,7 +314,6 @@ kick_scheduler_t radiotimer_isr() {
             // call the callback
             RFTIMER_REG__INT_CLEAR  = RFTIMER_REG__INT_COMPARE2_INT;
             radiotimer_vars.compare_cb();
-            debugpins_isr_clr();
             // kick the OS
             return KICK_SCHEDULER;
         }
@@ -331,7 +325,6 @@ kick_scheduler_t radiotimer_isr() {
                 // clear the interrupt bit and call the callback
                 RFTIMER_REG__INT_CLEAR  = RFTIMER_REG__INT_COMPARE1_INT;
                 radiotimer_vars.overflow_cb();
-                debugpins_isr_clr();
                 // kick the OS
                 return KICK_SCHEDULER;
             }
@@ -342,7 +335,6 @@ kick_scheduler_t radiotimer_isr() {
                 // clear the interrupt bit and call the callback
                 RFTIMER_REG__INT_CLEAR  = RFTIMER_REG__INT_COMPARE0_INT;
                 bsp_timer_isr();
-                debugpins_isr_clr();
                 // kick the OS
                 return KICK_SCHEDULER;
             } else {
@@ -352,6 +344,5 @@ kick_scheduler_t radiotimer_isr() {
     }
 #endif
     RFTIMER_REG__INT_CLEAR      = interrupt_flag;
-    debugpins_isr_clr();
     return DO_NOT_KICK_SCHEDULER;
 }

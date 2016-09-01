@@ -296,7 +296,6 @@ kick_scheduler_t radio_isr() {
         if (radio_vars.startFrame_cb!=NULL) {
             // call the callback
             radio_vars.startFrame_cb(capturedTime);
-            debugpins_isr_clr();
             // kick the OS
             return KICK_SCHEDULER;
         }
@@ -323,7 +322,6 @@ kick_scheduler_t radio_isr() {
         if (radio_vars.endFrame_cb!=NULL) {
             // call the callback
             radio_vars.endFrame_cb(capturedTime);
-            debugpins_isr_clr();
             // kick the OS
             return KICK_SCHEDULER;
         } else {
@@ -336,6 +334,5 @@ kick_scheduler_t radio_isr() {
         // To Be Done. add error description deifinition for this type of errors.
         RFCONTROLLER_REG__ERROR_CLEAR = irq_error;
     }
-    debugpins_isr_clr();
     return DO_NOT_KICK_SCHEDULER;
 }
