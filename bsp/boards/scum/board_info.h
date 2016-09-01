@@ -68,7 +68,7 @@ to return the board's description.
 //===== SCuM speicification
 
 // #define SLOT_FSM_IMPLEMENTATION_SINGLE_COMPARE_TIMER_INTERRUPT
-#define SLOT_FSM_IMPLEMENTATION_MULTIPLE_TIMER_INTERRUPT
+//#define SLOT_FSM_IMPLEMENTATION_MULTIPLE_TIMER_INTERRUPT
 
 //=========================== typedef  ========================================
 

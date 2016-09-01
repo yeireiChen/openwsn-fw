@@ -268,7 +268,10 @@ kick_scheduler_t radio_isr() {
     PORT_TIMER_WIDTH capturedTime;
     PORT_TIMER_WIDTH irq_status = RFCONTROLLER_REG__INT;
     PORT_TIMER_WIDTH irq_error  = RFCONTROLLER_REG__ERROR;
-
+    
+    if (irq_status == 0) {
+        debugpins_isr_set();
+    }
 #ifndef SLOT_FSM_IMPLEMENTATION_MULTIPLE_TIMER_INTERRUPT
     capturedTime                = radiotimer_getCapturedTime();
 #endif
