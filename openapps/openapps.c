@@ -14,6 +14,7 @@
 #include "cstorm.h"
 #include "cwellknown.h"
 #include "rrt.h"
+#include "cgreen.h"
 // TCP
 #include "techo.h"
 // UDP
@@ -32,6 +33,7 @@ void openapps_init(void) {
    // CoAP
    c6t_init();
    cinfo_init();
+   cgreen_init();
    //cexample_init();
    cleds__init();
    cstorm_init();
@@ -41,4 +43,6 @@ void openapps_init(void) {
    techo_init();
    // UDP
 //   uecho_init();
+
+   //cscheduled_init();
 }
