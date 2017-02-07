@@ -104,19 +104,43 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
          break;
       case COAP_CODE_REQ_POST:
          // try sending data
-         openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 0, 0);
-         if(msg->payload[0] == '1'){
-            openserial_printInfo(COMPONENT_CGREEN, ERR_INVALIDPACKETFROMRADIO, 1, msg->payload[0]);
-         }else{
-            openserial_printInfo(COMPONENT_CGREEN, ERR_INVALIDPACKETFROMRADIO, 5466, msg->payload[0]);
-         }
+         openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 1, 0);
 
+         //get entry count;
+         uint8_t entryCount = msg->payload[1];
+         openserial_printInfo(COMPONENT_CGREEN, ERR_UNSUPPORTED_COMMAND, entryCount, 0);
+         for(int i=0; i<entryCount; i++){
+            uint8_t baseOffset = i*11+2;
+            openserial_printInfo(COMPONENT_CGREEN, ERR_MSG_UNKNOWN_TYPE, baseOffset, 0);
+            open_addr_t     temp_neighbor;
+            memset(&temp_neighbor,0,sizeof(temp_neighbor));
+            temp_neighbor.type = ADDR_64B;
+            uint8_t slotOffset = msg->payload[baseOffset];
+            uint8_t channelOffset = msg->payload[baseOffset+1];
+            uint8_t cellType = msg->payload[baseOffset+2];
+            for(int j=0; j<8; j++){
+               temp_neighbor.addr_64b[j] = msg->payload[baseOffset+3+j];
+            }
+            
+            if(cellType==1){  //1 TX 0 RX
+               cellType = CELLTYPE_TX;
+            }else{
+               cellType = CELLTYPE_RX;
+            }
+            schedule_addActiveSlot(
+               slotOffset,                    // slot offset
+               cellType,                     // type of slot
+               FALSE,                                 // shared?
+               channelOffset,                                     // channel offset
+               &temp_neighbor                         // neighbor
+            );
+         }
+         
          msg->payload                     = &(msg->packet[127]);
          msg->length                      = 0;
          coap_header->Code                = COAP_CODE_RESP_CONTENT;
          
          outcome                          = E_SUCCESS;
-
 
          break;
       case COAP_CODE_REQ_DELETE:
