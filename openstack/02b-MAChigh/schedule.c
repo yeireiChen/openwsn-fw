@@ -580,7 +580,7 @@ void schedule_advanceSlot() {
    if (schedule_vars.currentScheduleEntry->slotOffset >= ((scheduleEntry_t*)schedule_vars.currentScheduleEntry->next)->slotOffset
        ) {
        // one slotframe has elapsed
-       sf0_notifyNewSlotframe();
+       //sf0_notifyNewSlotframe();
    }   
    schedule_vars.currentScheduleEntry = schedule_vars.currentScheduleEntry->next;
    
