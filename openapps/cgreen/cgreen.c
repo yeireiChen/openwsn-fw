@@ -105,7 +105,8 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
       case COAP_CODE_REQ_POST:
          // try sending data
          openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 1, 0);
-
+         
+         schedule_resetAllDistributeCell();
          //get entry count;
          uint8_t entryCount = msg->payload[1];
          openserial_printInfo(COMPONENT_CGREEN, ERR_UNSUPPORTED_COMMAND, entryCount, 0);

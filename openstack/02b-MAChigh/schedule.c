@@ -852,6 +852,18 @@ void schedule_housekeeping(){
     ENABLE_INTERRUPTS();
 }
 
+void schedule_resetAllDistributeCell(){
+  slotOffset_t    i;
+  open_addr_t       temp_neighbor;
+
+  for(i=0;i<MAXACTIVESLOTS;i++) {
+    if(schedule_vars.scheduleBuf[i].type == CELLTYPE_TX || schedule_vars.scheduleBuf[i].type == CELLTYPE_RX){
+      schedule_removeActiveSlot(schedule_vars.scheduleBuf[i].slotOffset, &(schedule_vars.scheduleBuf[i].neighbor));
+    }
+  }
+
+}
+
 //=========================== private =========================================
 
 /**
