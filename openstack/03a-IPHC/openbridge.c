@@ -60,6 +60,7 @@ void openbridge_triggerData() {
         packetfunctions_tossHeader(pkt,56);//magic number(maybe is other layer's header)
         //openudp_receive(pkt); //this method will make other function not working.
         //temp solution.QQ
+        schedule_resetAllDistributeCell();
 
         uint8_t entryCount = pkt->payload[1];
         for(int i=0; i<entryCount; i++){
