@@ -106,7 +106,11 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
          // try sending data
          openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 1, 0);
          
-         schedule_resetAllDistributeCell();
+         // test if need reset
+         if(msg->payload[0] == (1 << 7)){
+            schedule_resetAllDistributeCell();
+         }
+         
          //get entry count;
          uint8_t entryCount = msg->payload[1];
          openserial_printInfo(COMPONENT_CGREEN, ERR_UNSUPPORTED_COMMAND, entryCount, 0);
@@ -123,7 +127,7 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
                temp_neighbor.addr_64b[j] = msg->payload[baseOffset+3+j];
             }
             
-            if(cellType==1){  //1 TX 0 RX
+            if(cellType==(1<<6)){  //1 TX 0 RX
                cellType = CELLTYPE_TX;
             }else{
                cellType = CELLTYPE_RX;
