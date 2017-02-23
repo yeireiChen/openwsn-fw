@@ -726,7 +726,6 @@ void openserial_handleCommands(void){
             }
             break;
        default:
-           openserial_printInfo(66, ERR_MSG_UNKNOWN_TYPE, commandId, commandId);
            // wrong command ID
            break;
    }
