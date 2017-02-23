@@ -450,6 +450,45 @@ void openserial_stop() {
             case SERFRAME_PC2MOTE_COMMAND:
                 openserial_handleCommands();
                 break;
+            case SERFRAME_PC2MOTE_ADDSCHEDULE:
+                {   //for declare variable
+                    // test if need reset
+                    uint8_t data[200];
+                    memcpy(data, &openserial_vars.inputBuf[1],inputBufFill-1);
+                    if(data[0] == (1 << 7)){
+                        schedule_resetAllDistributeCell();
+                    }
+         
+                    //get entry count;
+                    uint8_t entryCount = data[1];
+                    for(int i=0; i<entryCount; i++){
+                        uint8_t baseOffset = i*11+2;
+                        open_addr_t     temp_neighbor;
+                        memset(&temp_neighbor,0,sizeof(temp_neighbor));
+                        temp_neighbor.type = ADDR_64B;
+                        uint8_t slotOffset = data[baseOffset];
+                        uint8_t channelOffset = data[baseOffset+1];
+                        uint8_t cellType = data[baseOffset+2];
+                        for(int j=0; j<8; j++){
+                            temp_neighbor.addr_64b[j] = data[baseOffset+3+j];
+                        }
+
+                        if(cellType==(1<<6)){  //1 TX 0 RX
+                            cellType = CELLTYPE_TX;
+                        }else{
+                            cellType = CELLTYPE_RX;
+                        }
+                        schedule_addActiveSlot(
+                            slotOffset,                    // slot offset
+                            cellType,                     // type of slot
+                            FALSE,                                 // shared?
+                            channelOffset,                                     // channel offset
+                            &temp_neighbor                         // neighbor
+                        );
+                    }
+                }
+                break;
+
         }
         // call registered commands
         if (openserial_vars.registeredCmd!=NULL && openserial_vars.registeredCmd->cmdId==cmdByte) {
