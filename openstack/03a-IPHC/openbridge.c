@@ -54,45 +54,6 @@ void openbridge_triggerData() {
       packetfunctions_reserveHeaderSize(pkt,numDataBytes-8);
       memcpy(pkt->payload,&(input_buffer[8]),numDataBytes-8);
 
-      //for root
-      if(idmanager_isMyAddress(&pkt->l2_nextORpreviousHop)){
-        
-        packetfunctions_tossHeader(pkt,56);//magic number(maybe is other layer's header)
-        //openudp_receive(pkt); //this method will make other function not working.
-        //temp solution.QQ
-        schedule_resetAllDistributeCell();
-
-        uint8_t entryCount = pkt->payload[1];
-        for(int i=0; i<entryCount; i++){
-          uint8_t baseOffset = i*11+2;
-          openserial_printInfo(COMPONENT_CGREEN, ERR_MSG_UNKNOWN_TYPE, baseOffset, 0);
-          open_addr_t     temp_neighbor;
-          memset(&temp_neighbor,0,sizeof(temp_neighbor));
-          temp_neighbor.type = ADDR_64B;
-          uint8_t slotOffset = pkt->payload[baseOffset];
-          uint8_t channelOffset = pkt->payload[baseOffset+1];
-          uint8_t cellType = pkt->payload[baseOffset+2];
-          for(int j=0; j<8; j++){
-            temp_neighbor.addr_64b[j] = pkt->payload[baseOffset+3+j];
-          }
-            
-          if(cellType==1){  //1 TX 0 RX
-            cellType = CELLTYPE_TX;
-          }else{
-            cellType = CELLTYPE_RX;
-          }
-          schedule_addActiveSlot(
-            slotOffset,                    // slot offset
-            cellType,                     // type of slot
-            FALSE,                                 // shared?
-            channelOffset,                                     // channel offset
-            &temp_neighbor                         // neighbor
-          );
-        }
-        openqueue_freePacketBuffer(pkt);
-        return;
-      }
-
       //this is to catch the too short packet. remove it after fw-103 is solved.
       if (numDataBytes<16){
               openserial_printError(COMPONENT_OPENBRIDGE,ERR_INVALIDSERIALFRAME,
