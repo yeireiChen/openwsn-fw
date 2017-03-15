@@ -168,6 +168,7 @@ enum {
    COMPONENT_SECURITY                  = 0x26,
    COMPONENT_USERIALBRIDGE             = 0x27,
    COMPONENT_CGREEN                    = 0x28,
+   COMPONENT_CREPORTASN                = 0x29,
 };
 
 /**

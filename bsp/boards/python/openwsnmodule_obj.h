@@ -42,6 +42,7 @@
 //#include "tohlone_obj.h"
 //#include "tohlone_obj.h"
 #include "uecho_obj.h"
+#include "creportasn_obj.h"
 
 //=========================== prototypes ======================================
 
@@ -250,6 +251,7 @@ struct OpenMote {
    cwellknown_vars_t    cwellknown_vars;
    rrt_vars_t           rrt_vars;
    cgreen_vars_t         cgreen_vars;
+   creportasn_vars_t    creportasn_vars;
    //tohlone_vars_t       tohlone_vars;
 };
 

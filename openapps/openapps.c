@@ -15,6 +15,7 @@
 #include "cwellknown.h"
 #include "rrt.h"
 #include "cgreen.h"
+#include "creportasn.h"
 // TCP
 #include "techo.h"
 // UDP
@@ -39,6 +40,8 @@ void openapps_init(void) {
    cstorm_init();
    cwellknown_init();
    rrt_init();
+
+   creportasn_init();
    // TCP
    techo_init();
    // UDP

@@ -932,6 +932,12 @@ port_INLINE void activity_ti1ORri1() {
          if (schedule_getOkToSend()) {
             schedule_getNeighbor(&neighbor);
             ieee154e_vars.dataToSend = openqueue_macGetDataPacket(&neighbor);
+          
+         if(ieee154e_vars.dataToSend != NULL && ieee154e_vars.dataToSend->creator == COMPONENT_CREPORTASN && cellType == CELLTYPE_TXRX){
+            
+            ieee154e_vars.dataToSend = NULL;
+               
+         }
             if ((ieee154e_vars.dataToSend==NULL) && (cellType==CELLTYPE_TXRX)) {
                couldSendEB=TRUE;
                // look for an EB packet in the queue
@@ -947,6 +953,7 @@ port_INLINE void activity_ti1ORri1() {
                changeToRX=TRUE;
             }
          } else {
+
             // change state
             changeState(S_TXDATAOFFSET);
             // change owner

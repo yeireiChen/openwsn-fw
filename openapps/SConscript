@@ -17,7 +17,8 @@ defaultApps   = [
     'uinject',
     'userialbridge',
     'rrt',
-    'cgreen'
+    'cgreen',
+    'creportasn'
 ]
 if localEnv['board']=='python':
     defaultApps  += [
@@ -35,7 +36,8 @@ defaultAppsInit   = [
     'techo',
     'uecho',
     'rrt',
-    'cgreen'
+    'cgreen',
+    'creportasn'
 ]
 
 # additional apps the user wants to build
