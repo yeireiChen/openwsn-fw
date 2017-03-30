@@ -104,7 +104,7 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
          break;
       case COAP_CODE_REQ_POST:
          // try sending data
-         openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 1, 0);
+         // openserial_printInfo(COMPONENT_CGREEN, ERR_BUSY_RECEIVING, 1, 0);
          
          // test if need reset
          if(msg->payload[0] == (1 << 7)){
@@ -113,10 +113,10 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
          
          //get entry count;
          uint8_t entryCount = msg->payload[1];
-         openserial_printInfo(COMPONENT_CGREEN, ERR_UNSUPPORTED_COMMAND, entryCount, 0);
+         // openserial_printInfo(COMPONENT_CGREEN, ERR_UNSUPPORTED_COMMAND, entryCount, 0);
          for(int i=0; i<entryCount; i++){
             uint8_t baseOffset = i*11+2;
-            openserial_printInfo(COMPONENT_CGREEN, ERR_MSG_UNKNOWN_TYPE, baseOffset, 0);
+            // openserial_printInfo(COMPONENT_CGREEN, ERR_MSG_UNKNOWN_TYPE, baseOffset, 0);
             open_addr_t     temp_neighbor;
             memset(&temp_neighbor,0,sizeof(temp_neighbor));
             temp_neighbor.type = ADDR_64B;
@@ -150,7 +150,7 @@ owerror_t cgreen_receive(OpenQueueEntry_t* msg,
          break;
       case COAP_CODE_REQ_DELETE:
          // new method
-         openserial_printInfo(COMPONENT_CGREEN, ERR_INVALIDSERIALFRAME, 0, 0);
+         // openserial_printInfo(COMPONENT_CGREEN, ERR_INVALIDSERIALFRAME, 0, 0);
          //reset packet
          msg->payload                     = &(msg->packet[127]);
          msg->length                      = 0;
