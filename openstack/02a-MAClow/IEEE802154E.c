@@ -23,6 +23,8 @@ ieee154e_vars_t    ieee154e_vars;
 ieee154e_stats_t   ieee154e_stats;
 ieee154e_dbg_t     ieee154e_dbg;
 
+//#define ADAPTIVE_SYNC
+
 //=========================== prototypes ======================================
 
 // SYNCHRONIZING
@@ -2537,3 +2539,9 @@ void endSlot() {
 bool ieee154e_isSynch(){
    return ieee154e_vars.isSync;
 }
+
+void ieee154e_getNumDesync(uint8_t* numDesync){
+   *(numDesync) = ieee154e_stats.numDeSync;
+   return;
+}
+

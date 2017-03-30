@@ -15,11 +15,14 @@
 #include "idmanager.h"
 #include "IEEE802154E.h"
 
+#include "neighbors.h"
+#include "icmpv6rpl.h"
+
 //=========================== defines =========================================
 
 /// inter-packet period (in ms)
 #define CREPORTASNPERIOD  20000
-#define PAYLOADLEN      12
+#define PAYLOADLEN      17
 
 const uint8_t creportasn_path0[] = "reportasn";
 
@@ -115,8 +118,31 @@ void creportasn_task_cb() {
    uint8_t* pointer = &pkt->payload[2];
    ieee154e_getAsn(pointer);
 
+   uint8_t numDeSync;
+   ieee154e_getNumDesync(&numDeSync);
+
+   pkt->payload[12] = numDeSync;
+
+   uint16_t myRank = icmpv6rpl_getMyDAGrank();
+
+   memcpy(&pkt->payload[13], &myRank, sizeof(myRank));
+
+   uint8_t parentIndex;
+
+
+   icmpv6rpl_getPreferredParentIndex(&parentIndex);
+
+   neighborRow_t parentRow;
+   uint8_t parentTx;
+   uint8_t parentTxACK;
+   neighbors_getParentTxTxACK(&parentTx, &parentTxACK, parentIndex);
+   
+   pkt->payload[15] = parentTx;
+   pkt->payload[16] = parentTxACK;
+
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0] = COAP_PAYLOAD_MARKER;
+   
 
    // content-type option
    packetfunctions_reserveHeaderSize(pkt,2);

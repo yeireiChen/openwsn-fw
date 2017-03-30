@@ -16,7 +16,7 @@
 #define BADNEIGHBORMAXRSSI        -80 //dBm
 #define GOODNEIGHBORMINRSSI       -90 //dBm
 #define SWITCHSTABILITYTHRESHOLD  3
-#define DEFAULTLINKCOST           15
+#define DEFAULTLINKCOST           1
 
 #define MAXDAGRANK                0xffff
 #define DEFAULTDAGRANK            MAXDAGRANK
@@ -92,6 +92,8 @@ bool          neighbors_getNeighborEui64(open_addr_t* address,uint8_t addr_type,
 void          neighbors_removeOld(void);
 // debug
 bool          debugPrint_neighbors(void);
+
+void          neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, uint8_t index);
 
 /**
 \}

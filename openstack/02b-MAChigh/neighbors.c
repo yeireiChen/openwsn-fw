@@ -419,6 +419,7 @@ void  neighbors_removeOld() {
     dagrank_t  lowestRank;
     PORT_RADIOTIMER_WIDTH timeSinceHeard;
     
+    return;
     // remove old neighbor
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
@@ -632,4 +633,10 @@ bool isThisRowMatching(open_addr_t* address, uint8_t rowNumber) {
                                (errorparameter_t)3);
          return FALSE;
    }
+}
+
+void neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, uint8_t index){
+  *(numTx) = neighbors_vars.neighbors[index].numTx;
+  *(numTxACK) = neighbors_vars.neighbors[index].numTxACK;
+  return;
 }

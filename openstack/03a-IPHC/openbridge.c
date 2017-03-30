@@ -96,15 +96,15 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
    memcpy(msg->payload,idmanager_getMyID(ADDR_64B)->addr_64b,LENGTH_ADDR64b);
    
    // This is for reportASN (testing)
-   if(msg->payload[msg->length-12] == 84 && msg->payload[msg->length-11] == 102){
+   if(msg->payload[msg->length-17] == 84 && msg->payload[msg->length-16] == 102){
       uint8_t asnArray[5];
       ieee154e_getAsn(asnArray);
 
-      msg->payload[msg->length-5] = asnArray[0];
-      msg->payload[msg->length-4] = asnArray[1];
-      msg->payload[msg->length-3] = asnArray[2];
-      msg->payload[msg->length-2] = asnArray[3];
-      msg->payload[msg->length-1] = asnArray[4];
+      msg->payload[msg->length-10] = asnArray[0];
+      msg->payload[msg->length-9] = asnArray[1];
+      msg->payload[msg->length-8] = asnArray[2];
+      msg->payload[msg->length-7] = asnArray[3];
+      msg->payload[msg->length-6] = asnArray[4];
 
       packetfunctions_tossHeader(msg, 39);
 
