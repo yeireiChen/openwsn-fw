@@ -198,15 +198,15 @@ static void button_init(void) {
     for (i = 0xFFFF; i != 0; i--);
 
     /* The button is an input GPIO on falling edge */
-    GPIOPinTypeGPIOInput(BSP_BUTTON_BASE, BSP_BUTTON_USER);
-    GPIOIntTypeSet(BSP_BUTTON_BASE, BSP_BUTTON_USER, GPIO_FALLING_EDGE);
+    //GPIOPinTypeGPIOInput(BSP_BUTTON_BASE, BSP_BUTTON_USER);
+    //GPIOIntTypeSet(BSP_BUTTON_BASE, BSP_BUTTON_USER, GPIO_FALLING_EDGE);
 
     /* Register the interrupt */
     GPIOPortIntRegister(BSP_BUTTON_BASE, GPIO_C_Handler);
 
     /* Clear and enable the interrupt */
-    GPIOPinIntClear(BSP_BUTTON_BASE, BSP_BUTTON_USER);
-    GPIOPinIntEnable(BSP_BUTTON_BASE, BSP_BUTTON_USER);
+    //GPIOPinIntClear(BSP_BUTTON_BASE, BSP_BUTTON_USER);
+    //GPIOPinIntEnable(BSP_BUTTON_BASE, BSP_BUTTON_USER);
 }
 
 static void SysCtrlRunSetting(void) {
