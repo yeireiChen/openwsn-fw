@@ -419,7 +419,6 @@ void  neighbors_removeOld() {
     dagrank_t  lowestRank;
     PORT_RADIOTIMER_WIDTH timeSinceHeard;
     
-    return;
     // remove old neighbor
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
@@ -438,6 +437,28 @@ void  neighbors_removeOld() {
     }
     
     // neighbors marked as NO_RES will never removed.
+
+    dagrank_t myRank = icmpv6rpl_getMyDAGrank() - MINHOPRANKINCREASE;
+
+    // remove neighbor with rank larger then me.
+    for(i=0; i<MAXNUMNEIGHBORS; i++){
+        if(
+            neighbors_vars.neighbors[i].used == 1 &&
+            myRank < neighbors_vars.neighbors[i].DAGrank &&
+            neighbors_vars.neighbors[i].f6PNORES == FALSE
+      ){
+          haveParent = icmpv6rpl_getPreferredParentIndex(&j);
+          if (haveParent && (i==j)) { // this is our preferred parent, carefully!
+              icmpv6rpl_killPreferredParent();
+              icmpv6rpl_updateMyDAGrankAndParentSelection();
+          }
+          if (neighbors_vars.neighbors[i].f6PNORES == FALSE){
+              removeNeighbor(i);
+          }
+        }
+    }
+
+    return;
     
     // first round
     lowestRank = MAXDAGRANK;
