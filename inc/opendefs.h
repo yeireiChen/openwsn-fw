@@ -348,6 +348,7 @@ typedef struct {
    uint8_t          numTxACK;
    uint8_t          numWraps;//number of times the tx counter wraps. can be removed if memory is a restriction. also check openvisualizer then.
    asn_t            asn;
+   asn_t            lastTxAsn;
    uint8_t          joinPrio;
    bool             f6PNORES;
 } neighborRow_t;

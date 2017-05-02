@@ -233,7 +233,18 @@ void neighbors_indicateRx(open_addr_t* l2_src,
          
          // update numRx, rssi, asn
          neighbors_vars.neighbors[i].numRx++;
-         neighbors_vars.neighbors[i].rssi=rssi;
+
+         //Exponential Moving Average
+         #define rssi_alpha 1
+         uint16_t temp_rssi = (uint16_t)neighbors_vars.neighbors[i].rssi*-1;
+         temp_rssi = temp_rssi * 9;
+         temp_rssi = temp_rssi + rssi*-1;
+         if(temp_rssi % 10 >= 5){
+          temp_rssi = temp_rssi / 10 +1;
+         }else{
+          temp_rssi = temp_rssi / 10;
+         }
+         neighbors_vars.neighbors[i].rssi=(int8_t)temp_rssi*-1;
          memcpy(&neighbors_vars.neighbors[i].asn,asnTs,sizeof(asn_t));
          //update jp
          if (joinPrioPresent==TRUE){
@@ -319,6 +330,7 @@ void neighbors_indicateTx(open_addr_t* l2_dest,
             neighbors_vars.neighbors[i].numTxACK++;
             memcpy(&neighbors_vars.neighbors[i].asn,asnTs,sizeof(asn_t));
         }
+        memcpy(&neighbors_vars.neighbors[i].lastTxAsn,asnTs,sizeof(asn_t));
         // #TODO : investigate this TX wrap thing! @incorrect in the meantime
         // DB (Nov 2015) I believe this is correct. The ratio numTx/numTxAck is still a correct approximation
         // of ETX after scaling down by a factor 2. Obviously, each one of numTx and numTxAck is no longer an
@@ -392,7 +404,37 @@ uint16_t neighbors_getLinkMetric(uint8_t index) {
    // we assume that this neighbor has already been checked for being in use         
    // calculate link cost to this neighbor
    if (neighbors_vars.neighbors[index].numTxACK==0) {
-      rankIncrease = DEFAULTLINKCOST*2*MINHOPRANKINCREASE;
+    // rankIncrease = DEFAULTLINKCOST*2*MINHOPRANKINCREASE;
+    // return rankIncrease;
+      // ((RSSI*-1)+20)/40 * MINHOPRANKINCREASE#define RSSI_HIGH 50
+#define RSSI_HIGH 50
+#define RSSI_LOW  80
+#define RSSI_DIFF (RSSI_LOW - RSSI_HIGH)
+        rankIncreaseIntermediary = neighbors_vars.neighbors[index].rssi * -1;
+
+        if(rankIncreaseIntermediary <= RSSI_HIGH){
+            rankIncreaseIntermediary = RSSI_HIGH + 1;
+        }
+        if(rankIncreaseIntermediary > RSSI_LOW){
+            rankIncreaseIntermediary = RSSI_LOW;
+        }
+
+        rankIncreaseIntermediary = rankIncreaseIntermediary - RSSI_HIGH;
+        rankIncreaseIntermediary = rankIncreaseIntermediary << 10;
+        rankIncreaseIntermediary = rankIncreaseIntermediary / 15 + (1 << 10);
+
+
+      // OF0
+        rankIncreaseIntermediary = rankIncreaseIntermediary*3;
+        rankIncreaseIntermediary = rankIncreaseIntermediary - (2 << 10);
+        rankIncreaseIntermediary = rankIncreaseIntermediary * MINHOPRANKINCREASE;
+      // this could still overflow for numTx large and numTxAck small, Casting to 16 bits will yiel the least significant bits
+      if (rankIncreaseIntermediary >= (65536<<10)) {
+         rankIncrease = 65535;
+      } else {
+      rankIncrease = (uint16_t)(rankIncreaseIntermediary >> 10);
+      }
+      // rankIncrease = DEFAULTLINKCOST*2*MINHOPRANKINCREASE;
    } else {
       //6TiSCH minimal draft using OF0 for rank computation: ((3*numTx/numTxAck)-2)*minHopRankIncrease
       // numTx is on 8 bits, so scaling up 10 bits won't lead to saturation
@@ -435,28 +477,47 @@ void  neighbors_removeOld() {
             }
         }
     }
+
+
+    // freshness 40000 slot ~ 600 second
+    for (i=0;i<MAXNUMNEIGHBORS;i++) {
+        if (neighbors_vars.neighbors[i].used==1 && neighbors_vars.neighbors[i].numTx != 0) {
+            timeSinceHeard = ieee154e_asnDiff(&neighbors_vars.neighbors[i].lastTxAsn);
+            if (timeSinceHeard>40000) {
+                haveParent = icmpv6rpl_getPreferredParentIndex(&j);
+                if (haveParent && (i==j)) { // this is our preferred parent, carefully!
+                    
+                } else {
+                  neighbors_vars.neighbors[i].numTx = 0;
+                  neighbors_vars.neighbors[i].numTxACK = 0;
+
+                }
+            }
+        }
+    }
+
     
     // neighbors marked as NO_RES will never removed.
 
-    dagrank_t myRank = icmpv6rpl_getMyDAGrank() - MINHOPRANKINCREASE;
+    // dagrank_t myRank = icmpv6rpl_getMyDAGrank() - MINHOPRANKINCREASE;
 
-    // remove neighbor with rank larger then me.
-    for(i=0; i<MAXNUMNEIGHBORS; i++){
-        if(
-            neighbors_vars.neighbors[i].used == 1 &&
-            myRank < neighbors_vars.neighbors[i].DAGrank &&
-            neighbors_vars.neighbors[i].f6PNORES == FALSE
-      ){
-          haveParent = icmpv6rpl_getPreferredParentIndex(&j);
-          if (haveParent && (i==j)) { // this is our preferred parent, carefully!
-              icmpv6rpl_killPreferredParent();
-              icmpv6rpl_updateMyDAGrankAndParentSelection();
-          }
-          if (neighbors_vars.neighbors[i].f6PNORES == FALSE){
-              removeNeighbor(i);
-          }
-        }
-    }
+    // // remove neighbor with rank larger then me.
+    // for(i=0; i<MAXNUMNEIGHBORS; i++){
+    //     if(
+    //         neighbors_vars.neighbors[i].used == 1 &&
+    //         myRank < neighbors_vars.neighbors[i].DAGrank &&
+    //         neighbors_vars.neighbors[i].f6PNORES == FALSE
+    //   ){
+    //       haveParent = icmpv6rpl_getPreferredParentIndex(&j);
+    //       if (haveParent && (i==j)) { // this is our preferred parent, carefully!
+    //           icmpv6rpl_killPreferredParent();
+    //           icmpv6rpl_updateMyDAGrankAndParentSelection();
+    //       }
+    //       if (neighbors_vars.neighbors[i].f6PNORES == FALSE){
+    //           removeNeighbor(i);
+    //       }
+    //     }
+    // }
 
     return;
     
@@ -465,7 +526,7 @@ void  neighbors_removeOld() {
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
             if (
-                lowestRank>neighbors_vars.neighbors[i].DAGrank && 
+                lowestRank>neighbors_vars.neighbors[i].DAGrank + neighbors_getLinkMetric(i) && 
                 neighbors_vars.neighbors[i].f6PNORES == FALSE
             ){
                 lowestRank = neighbors_vars.neighbors[i].DAGrank;
@@ -484,7 +545,7 @@ void  neighbors_removeOld() {
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
             if (
-                lowestRank>neighbors_vars.neighbors[i].DAGrank &&
+                lowestRank>neighbors_vars.neighbors[i].DAGrank + neighbors_getLinkMetric(i) &&
                 i != neighborIndexWithLowestRank[0]           && 
                 neighbors_vars.neighbors[i].f6PNORES == FALSE
             ){
@@ -504,7 +565,7 @@ void  neighbors_removeOld() {
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
             if (
-                lowestRank>neighbors_vars.neighbors[i].DAGrank &&
+                lowestRank>neighbors_vars.neighbors[i].DAGrank + neighbors_getLinkMetric(i) &&
                 i != neighborIndexWithLowestRank[0]           &&
                 i != neighborIndexWithLowestRank[1]           && 
                 neighbors_vars.neighbors[i].f6PNORES == FALSE
@@ -594,6 +655,7 @@ void registerNewNeighbor(open_addr_t* address,
             neighbors_vars.neighbors[i].numTx                  = 0;
             neighbors_vars.neighbors[i].numTxACK               = 0;
             memcpy(&neighbors_vars.neighbors[i].asn,asnTimestamp,sizeof(asn_t));
+            memcpy(&neighbors_vars.neighbors[i].lastTxAsn,asnTimestamp,sizeof(asn_t));
             //update jp
             if (joinPrioPresent==TRUE){
                neighbors_vars.neighbors[i].joinPrio=joinPrio;
@@ -638,6 +700,9 @@ void removeNeighbor(uint8_t neighborIndex) {
    neighbors_vars.neighbors[neighborIndex].asn.bytes0and1            = 0;
    neighbors_vars.neighbors[neighborIndex].asn.bytes2and3            = 0;
    neighbors_vars.neighbors[neighborIndex].asn.byte4                 = 0;
+   neighbors_vars.neighbors[neighborIndex].lastTxAsn.bytes0and1            = 0;
+   neighbors_vars.neighbors[neighborIndex].lastTxAsn.bytes2and3            = 0;
+   neighbors_vars.neighbors[neighborIndex].lastTxAsn.byte4                 = 0;
    neighbors_vars.neighbors[neighborIndex].f6PNORES                  = FALSE;
 }
 

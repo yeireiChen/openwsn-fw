@@ -14,6 +14,7 @@
 //#include "ADC_Channel.h"
 #include "idmanager.h"
 #include "IEEE802154E.h"
+#include "IEEE802154.h"
 
 #include "neighbors.h"
 #include "icmpv6rpl.h"
@@ -161,6 +162,8 @@ void creportasn_task_cb() {
    pkt->l3_destinationAdd.type    = ADDR_128B;
    memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_ringmaster,16);
    
+   pkt->l2_frameType = IEEE154_TYPE_SENSED_DATA;
+
    // send
    outcome = opencoap_send(
       pkt,
