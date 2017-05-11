@@ -937,8 +937,6 @@ port_INLINE void activity_ti1ORri1() {
           
             if(ieee154e_vars.dataToSend != NULL && (ieee154e_vars.dataToSend->creator == COMPONENT_CREPORTASN || ieee154e_vars.dataToSend->l2_frameType == IEEE154_TYPE_SENSED_DATA) && cellType == CELLTYPE_TXRX){
                ieee154e_vars.dataToSend = NULL;   
-               openserial_printInfo(66, 77, ieee154e_vars.slotOffset, ieee154e_vars.dataToSend->l2_frameType);
-               openserial_printInfo(66, 78, ieee154e_vars.dataToSend->creator, ieee154e_vars.dataToSend->l3_sourceAdd.addr_64b[7]);
             }
 
             if ((ieee154e_vars.dataToSend==NULL) && (cellType==CELLTYPE_TXRX)) {
