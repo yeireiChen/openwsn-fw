@@ -1638,7 +1638,7 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
       
       // if CRC doesn't check, stop
       if (ieee154e_vars.dataReceived->l1_crc==FALSE) {
-         openserial_printError(66, 100, 0, 0);
+         // openserial_printError(66, 100, 0, 0);
          // jump to the error code below this do-while loop
          break;
       }
@@ -1788,8 +1788,8 @@ port_INLINE void activity_ri5(PORT_RADIOTIMER_WIDTH capturedTime) {
    } while(0);
    
    // free the (invalid) received data so RAM memory can be recycled
-   openserial_printError(66, 98, ieee154e_vars.slotOffset, ieee154e_vars.dataReceived->length);
-   openserial_printError(66, 99, ieee154e_vars.dataReceived->l2_frameType, 0);
+   // openserial_printError(66, 98, ieee154e_vars.slotOffset, ieee154e_vars.dataReceived->length);
+   // openserial_printError(66, 99, ieee154e_vars.dataReceived->l2_frameType, 0);
    openqueue_freePacketBuffer(ieee154e_vars.dataReceived);
    
    // clear local variable
