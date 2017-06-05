@@ -251,28 +251,39 @@ void neighbors_indicateRx(open_addr_t* l2_src,
             neighbors_vars.neighbors[i].joinPrio=joinPrio;
          }
          
-         // update stableNeighbor, switchStabilityCounter
+         // Because we use average RSSI, just switch stable right away
          if (neighbors_vars.neighbors[i].stableNeighbor==FALSE) {
             if (neighbors_vars.neighbors[i].rssi>BADNEIGHBORMAXRSSI) {
-               neighbors_vars.neighbors[i].switchStabilityCounter++;
-               if (neighbors_vars.neighbors[i].switchStabilityCounter>=SWITCHSTABILITYTHRESHOLD) {
-                  neighbors_vars.neighbors[i].switchStabilityCounter=0;
-                  neighbors_vars.neighbors[i].stableNeighbor=TRUE;
-               }
-            } else {
-               neighbors_vars.neighbors[i].switchStabilityCounter=0;
+              neighbors_vars.neighbors[i].stableNeighbor=TRUE;
             }
          } else if (neighbors_vars.neighbors[i].stableNeighbor==TRUE) {
             if (neighbors_vars.neighbors[i].rssi<GOODNEIGHBORMINRSSI) {
-               neighbors_vars.neighbors[i].switchStabilityCounter++;
-               if (neighbors_vars.neighbors[i].switchStabilityCounter>=SWITCHSTABILITYTHRESHOLD) {
-                  neighbors_vars.neighbors[i].switchStabilityCounter=0;
-                   neighbors_vars.neighbors[i].stableNeighbor=FALSE;
-               }
-            } else {
-               neighbors_vars.neighbors[i].switchStabilityCounter=0;
+              neighbors_vars.neighbors[i].stableNeighbor=FALSE;
             }
          }
+
+         // // update stableNeighbor, switchStabilityCounter
+         // if (neighbors_vars.neighbors[i].stableNeighbor==FALSE) {
+         //    if (neighbors_vars.neighbors[i].rssi>BADNEIGHBORMAXRSSI) {
+         //       neighbors_vars.neighbors[i].switchStabilityCounter++;
+         //       if (neighbors_vars.neighbors[i].switchStabilityCounter>=SWITCHSTABILITYTHRESHOLD) {
+         //          neighbors_vars.neighbors[i].switchStabilityCounter=0;
+         //          neighbors_vars.neighbors[i].stableNeighbor=TRUE;
+         //       }
+         //    } else {
+         //       neighbors_vars.neighbors[i].switchStabilityCounter=0;
+         //    }
+         // } else if (neighbors_vars.neighbors[i].stableNeighbor==TRUE) {
+         //    if (neighbors_vars.neighbors[i].rssi<GOODNEIGHBORMINRSSI) {
+         //       neighbors_vars.neighbors[i].switchStabilityCounter++;
+         //       if (neighbors_vars.neighbors[i].switchStabilityCounter>=SWITCHSTABILITYTHRESHOLD) {
+         //          neighbors_vars.neighbors[i].switchStabilityCounter=0;
+         //           neighbors_vars.neighbors[i].stableNeighbor=FALSE;
+         //       }
+         //    } else {
+         //       neighbors_vars.neighbors[i].switchStabilityCounter=0;
+         //    }
+         // }
          
          // stop looping
          break;
@@ -465,7 +476,7 @@ void  neighbors_removeOld() {
     for (i=0;i<MAXNUMNEIGHBORS;i++) {
         if (neighbors_vars.neighbors[i].used==1) {
             timeSinceHeard = ieee154e_asnDiff(&neighbors_vars.neighbors[i].asn);
-            if (timeSinceHeard>DESYNCTIMEOUT) {
+            if (timeSinceHeard>80000) { //2333 is too small, 35 second
                 haveParent = icmpv6rpl_getPreferredParentIndex(&j);
                 if (haveParent && (i==j)) { // this is our preferred parent, carefully!
                     icmpv6rpl_killPreferredParent();
