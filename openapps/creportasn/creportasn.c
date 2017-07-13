@@ -36,7 +36,7 @@ creportasn_vars_t creportasn_vars;
 owerror_t creportasn_receive(OpenQueueEntry_t* msg,
                     coap_header_iht*  coap_header,
                     coap_option_iht*  coap_options);
-void    creportasn_timer_cb(opentimer_id_t id);
+void    creportasn_timer_cb(opentimers_id_t id);
 void    creportasn_task_cb(void);
 void    creportasn_sendDone(OpenQueueEntry_t* msg,
                        owerror_t error);
@@ -60,9 +60,15 @@ void creportasn_init() {
    creportasn_vars.errorCounter = 0;
    
    opencoap_register(&creportasn_vars.desc);
-   creportasn_vars.timerId    = opentimers_start(CREPORTASNPERIOD,
-                                                TIMER_PERIODIC,TIME_MS,
-                                                creportasn_timer_cb);
+   creportasn_vars.timerId    = opentimers_create();
+   opentimers_scheduleIn(
+     creportasn_vars.timerId, 
+     CREPORTASNPERIOD, 
+     TIME_MS, 
+     TIMER_PERIODIC,
+     creportasn_timer_cb
+   );
+
 }
 
 //=========================== private =========================================
@@ -75,7 +81,7 @@ owerror_t creportasn_receive(OpenQueueEntry_t* msg,
 
 //timer fired, but we don't want to execute task in ISR mode
 //instead, push task to scheduler with COAP priority, and let scheduler take care of it
-void creportasn_timer_cb(opentimer_id_t id){
+void creportasn_timer_cb(opentimers_id_t id){
    scheduler_push_task(creportasn_task_cb,TASKPRIO_COAP);
 }
 

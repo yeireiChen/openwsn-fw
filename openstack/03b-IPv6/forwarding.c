@@ -9,7 +9,6 @@
 #include "icmpv6.h"
 #include "icmpv6rpl.h"
 #include "openudp.h"
-#include "opentcp.h"
 #include "debugpins.h"
 #include "scheduler.h"
 
@@ -26,6 +25,9 @@ owerror_t forwarding_send_internal_RoutingTable(
    ipv6_header_iht*     ipv6_outer_header,
    ipv6_header_iht*     ipv6_inner_header,
    rpl_option_ht*       rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+   deadline_option_ht*	deadline_option,
+#endif   
    uint32_t*             flow_label,
    uint8_t              fw_SendOrfw_Rcv
 );
@@ -33,6 +35,9 @@ owerror_t forwarding_send_internal_SourceRouting(
    OpenQueueEntry_t*    msg,
    ipv6_header_iht*     ipv6_outer_header,
    ipv6_header_iht*     ipv6_inner_header,
+#ifdef DEADLINE_OPTION_ENABLED
+   deadline_option_ht*	deadline_option,
+#endif   
    rpl_option_ht*       rpl_option
 );
 void      forwarding_createRplOption(
@@ -40,6 +45,11 @@ void      forwarding_createRplOption(
    uint8_t              flags
 );
 
+#ifdef DEADLINE_OPTION_ENABLED
+void forwarding_createDeadlineOption(
+   deadline_option_ht*   deadline_option
+);
+#endif
 
 //=========================== public ==========================================
 
@@ -61,6 +71,9 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
     ipv6_header_iht      ipv6_outer_header;
     ipv6_header_iht      ipv6_inner_header;
     rpl_option_ht        rpl_option;
+#ifdef DEADLINE_OPTION_ENABLED
+    deadline_option_ht   deadline_option;
+#endif    
     open_addr_t*         myprefix;
     open_addr_t*         myadd64;
     uint32_t             flow_label = 0;
@@ -106,6 +119,12 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
       &rpl_option,      // rpl_option to fill in
       0x00              // flags
     );
+    
+#ifdef DEADLINE_OPTION_ENABLED
+    forwarding_createDeadlineOption(
+      &deadline_option
+    );
+#endif    
 
     packetfunctions_ip128bToMac64b(&(msg->l3_destinationAdd),&temp_dest_prefix,&temp_dest_mac64b);
     //xv poipoi -- get the src prefix as well
@@ -170,6 +189,9 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
         &ipv6_outer_header,
         &ipv6_inner_header,
         &rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+        &deadline_option,
+#endif        
         &flow_label,
         PCKTSEND
     );
@@ -196,8 +218,6 @@ void forwarding_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
       
       // indicate sendDone to upper layer
       switch(msg->l4_protocol) {
-         case IANA_TCP:
-            opentcp_sendDone(msg,error);
             break;
          case IANA_UDP:
             openudp_sendDone(msg,error);
@@ -225,14 +245,17 @@ void forwarding_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
 \brief Indicates a packet was received.
 
 \param[in,out] msg               The packet just sent.
-\param[in]     ipv6_header       The information contained in the IPv6 header.
-\param[in]     ipv6_hop_header   The hop-by-hop header present in the packet.
+\param[in]     ipv6_outer_header The information contained in the IPv6 header.
+\param[in]     ipv6_inner_header The hop-by-hop header present in the packet.
 \param[in]     rpl_option        The hop-by-hop options present in the packet.
 */
 void forwarding_receive(
       OpenQueueEntry_t*      msg,
       ipv6_header_iht*       ipv6_outer_header,
       ipv6_header_iht*       ipv6_inner_header,
+#ifdef DEADLINE_OPTION_ENABLED      
+      deadline_option_ht*	 	 deadline_option,
+#endif      
       rpl_option_ht*         rpl_option
     ) {
     uint8_t flags;
@@ -267,8 +290,6 @@ void forwarding_receive(
         packetfunctions_tossHeader(msg,ipv6_inner_header->header_length);
         // indicate received packet to upper layer
         switch(msg->l4_protocol) {
-        case IANA_TCP:
-            opentcp_receive(msg);
             break;
         case IANA_UDP:
             openudp_receive(msg);
@@ -292,6 +313,23 @@ void forwarding_receive(
       
         // change the creator of the packet
         msg->creator = COMPONENT_FORWARDING;
+        
+#ifdef DEADLINE_OPTION_ENABLED
+        if (deadline_option != NULL) {       
+            // Deadline Option : Drop 
+            if( (deadline_option->time_left <= 0) && (deadline_option->d_flag == 1) ) { // packet expired  
+               deadline_option->time_left = 0;         
+               openserial_printError(
+                         COMPONENT_FORWARDING,
+                         ERR_6LORH_DEADLINE_DROPPED,
+                         (errorparameter_t)0,
+                         (errorparameter_t)0
+               );           
+               openqueue_freePacketBuffer(msg);
+               return;
+           }
+       }
+#endif        
         
         if(openqueue_isHighPriorityEntryEnough()==FALSE){
           // after change the creator to COMPONENT_FORWARDING,
@@ -327,6 +365,12 @@ void forwarding_receive(
                 );
             }
             forwarding_createRplOption(rpl_option, rpl_option->flags);
+            
+#ifdef DEADLINE_OPTION_ENABLED
+            if (deadline_option != NULL)
+                forwarding_createDeadlineOption(deadline_option);
+#endif
+            
             // resend as if from upper layer
             if (
                 forwarding_send_internal_RoutingTable(
@@ -334,6 +378,9 @@ void forwarding_receive(
                     ipv6_outer_header,
                     ipv6_inner_header,
                     rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+                    deadline_option,
+#endif                    
                     &(ipv6_outer_header->flow_label),
                     PCKTFORWARD 
                 )==E_FAIL
@@ -347,6 +394,9 @@ void forwarding_receive(
                     msg,
                     ipv6_outer_header,
                     ipv6_inner_header,
+#ifdef DEADLINE_OPTION_ENABLED
+                    deadline_option,
+#endif                    
                     rpl_option
                 )==E_FAIL
             ) {
@@ -392,11 +442,12 @@ void forwarding_getNextHop(open_addr_t* destination128b, open_addr_t* addressToW
 /**
 \brief Send a packet using the routing table to find the next hop.
 
-\param[in,out] msg             The packet to send.
-\param[in]     ipv6_header     The packet's IPv6 header.
-\param[in]     rpl_option      The hop-by-hop option to add in this packet.
-\param[in]     flow_label      The flowlabel to add in the 6LoWPAN header.
-\param[in]     fw_SendOrfw_Rcv The packet is originating from this mote
+\param[in,out] msg               The packet to send.
+\param[in]     ipv6_outer_header The packet's IPv6 outer header.
+\param[in]     ipv6_inner_header The packet's IPv6 inner header.
+\param[in]     rpl_option        The hop-by-hop option to add in this packet.
+\param[in]     flow_label        The flowlabel to add in the 6LoWPAN header.
+\param[in]     fw_SendOrfw_Rcv   The packet is originating from this mote
    (PCKTSEND), or forwarded (PCKTFORWARD).
 */
 owerror_t forwarding_send_internal_RoutingTable(
@@ -404,6 +455,9 @@ owerror_t forwarding_send_internal_RoutingTable(
       ipv6_header_iht*       ipv6_outer_header,
       ipv6_header_iht*       ipv6_inner_header,
       rpl_option_ht*         rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+      deadline_option_ht*    deadline_option,
+#endif      
       uint32_t*              flow_label,
       uint8_t                fw_SendOrfw_Rcv
    ) {
@@ -430,6 +484,9 @@ owerror_t forwarding_send_internal_RoutingTable(
       ipv6_outer_header,
       ipv6_inner_header,
       rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+      deadline_option,
+#endif      
       flow_label,
       NULL,  // no rh3
       0,
@@ -445,13 +502,18 @@ owerror_t forwarding_send_internal_RoutingTable(
 How to process the routing header is detailed in
 http://tools.ietf.org/html/rfc6554#page-9.
 
-\param[in,out] msg             The packet to send.
-\param[in]     ipv6_header     The packet's IPv6 header.
+\param[in,out] msg               The packet to send.
+\param[in]     ipv6_outer_header The packet's IPv6 outer header.
+\param[in]     ipv6_inner_header The packet's IPv6 inner header.
+\param[in]     rpl_option        The hop-by-hop option to add in this packet.
 */
 owerror_t forwarding_send_internal_SourceRouting(
     OpenQueueEntry_t* msg,
     ipv6_header_iht*  ipv6_outer_header,
     ipv6_header_iht*  ipv6_inner_header,
+#ifdef DEADLINE_OPTION_ENABLED
+    deadline_option_ht*	 	 deadline_option,
+#endif    
     rpl_option_ht*    rpl_option
     ) {
     uint8_t              temp_8b;
@@ -732,6 +794,12 @@ owerror_t forwarding_send_internal_SourceRouting(
             );
         }
         forwarding_createRplOption(rpl_option, rpl_option->flags);
+        
+#ifdef DEADLINE_OPTION_ENABLED
+        if (deadline_option != NULL)
+            forwarding_createDeadlineOption(deadline_option);
+#endif
+        
         // toss the IP in IP 6LoRH
         packetfunctions_tossHeader(msg, ipv6_outer_header->header_length);
     } else {
@@ -744,6 +812,9 @@ owerror_t forwarding_send_internal_SourceRouting(
         ipv6_outer_header,
         ipv6_inner_header,
         rpl_option,
+#ifdef DEADLINE_OPTION_ENABLED
+        deadline_option,
+#endif        
         &ipv6_outer_header->flow_label,
         &RH_copy[0],
         RH_length,
@@ -778,4 +849,16 @@ void forwarding_createRplOption(rpl_option_ht* rpl_option, uint8_t flags) {
     
     rpl_option->flags = (flags & ~I_FLAG & ~K_FLAG) | (I<<1) | K;
 }
+
+#ifdef DEADLINE_OPTION_ENABLED
+/**
+\brief Create a Deadline-6LoRH .
+
+\param[out] delay_option A pointer to the structure to fill in.
+
+*/
+void forwarding_createDeadlineOption(deadline_option_ht* deadline_option) {
+    deadline_option->optionType = DEADLINE_HOPBYHOP_HEADER_OPTION_TYPE;
+}
+#endif
 
