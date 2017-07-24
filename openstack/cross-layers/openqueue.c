@@ -315,6 +315,7 @@ void openqueue_reset_entry(OpenQueueEntry_t* entry) {
    //l3
    entry->l3_destinationAdd.type       = ADDR_NONE;
    entry->l3_sourceAdd.type            = ADDR_NONE;
+   entry->l3_trafficClass              = 0;
    //l2
    entry->l2_nextORpreviousHop.type    = ADDR_NONE;
    entry->l2_frameType                 = IEEE154_TYPE_UNDEFINED;

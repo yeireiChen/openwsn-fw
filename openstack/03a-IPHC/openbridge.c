@@ -106,7 +106,7 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
       msg->payload[msg->length-10] = asnArray[3];
       msg->payload[msg->length-9] = asnArray[4];
 
-      packetfunctions_tossHeader(msg, 39);
+      packetfunctions_tossHeader(msg, 40);  // if no traffic class is 39, downstair have one to change!
 
       bool oneMore = FALSE;
       // for some reason, it will have one more byte
@@ -160,7 +160,7 @@ void openbridge_receive(OpenQueueEntry_t* msg) {
       *checksum_ptr     = temp_checksum[0];
       *(checksum_ptr+1) = temp_checksum[1];
 
-      packetfunctions_reserveHeaderSize(msg, 39);
+      packetfunctions_reserveHeaderSize(msg, 40);
       if(oneMore == TRUE){
         packetfunctions_reserveHeaderSize(msg, 1);
       }

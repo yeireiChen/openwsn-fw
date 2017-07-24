@@ -371,11 +371,13 @@ owerror_t sixtop_send(OpenQueueEntry_t *msg) {
   msg->owner        = COMPONENT_SIXTOP;
 
   // If frameType have been set to 6, don't change it
-  if(msg->l2_frameType == IEEE154_TYPE_SENSED_DATA){
-    msg->l2_frameType = IEEE154_TYPE_SENSED_DATA;
-  }else{
-    msg->l2_frameType = IEEE154_TYPE_DATA;
-  }
+  // if(msg->l2_frameType == IEEE154_TYPE_SENSED_DATA){
+  //   msg->l2_frameType = IEEE154_TYPE_SENSED_DATA;
+  // }else{
+  //   msg->l2_frameType = IEEE154_TYPE_DATA;
+  // }
+
+  msg->l2_frameType = IEEE154_TYPE_DATA;
    
 
    // set l2-security attributes

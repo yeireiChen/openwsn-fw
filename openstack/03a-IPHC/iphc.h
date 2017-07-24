@@ -268,6 +268,7 @@ void          iphc_receive(OpenQueueEntry_t *msg);
 owerror_t iphc_prependIPv6Header(
    OpenQueueEntry_t*    msg,
    uint8_t              tf,
+   uint8_t              value_trafficClass,
    uint32_t             value_flowLabel,
    uint8_t              nh,
    uint8_t              value_nextHeader,

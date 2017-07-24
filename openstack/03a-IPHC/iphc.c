@@ -331,6 +331,7 @@ void iphc_receive(OpenQueueEntry_t* msg) {
 owerror_t iphc_prependIPv6Header(
       OpenQueueEntry_t* msg,
       uint8_t           tf,
+      uint8_t           value_trafficClass,
       uint32_t          value_flowLabel,
       uint8_t           nh,
       uint8_t           value_nextHeader,
@@ -522,7 +523,7 @@ owerror_t iphc_prependIPv6Header(
          return E_FAIL;
    }
    
-   // flowlabel
+   // traffic class & flow label
    switch (tf) {
       case IPHC_TF_3B:
              packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
@@ -534,9 +535,14 @@ owerror_t iphc_prependIPv6Header(
          break;            
       case IPHC_TF_ELIDED:
          break;
-      case IPHC_TF_4B:
-         //unsupported
+
       case IPHC_TF_1B:
+         // ECN + DSCP (1 byte)
+         packetfunctions_reserveHeaderSize(msg,sizeof(uint8_t));
+         *((uint8_t*)(msg->payload)) = ((uint8_t)(value_trafficClass));
+         // memcpy(&msg->payload[0], &msg->l3_trafficClass, sizeof(uint8_t));
+         break;
+      case IPHC_TF_4B:
          //unsupported
       default:
          openserial_printCritical(
@@ -861,9 +867,12 @@ uint8_t iphc_retrieveIphcHeader(open_addr_t* temp_addr_16b,
           case IPHC_TF_ELIDED:
              ipv6_header->flow_label        = 0;
              break;
-          case IPHC_TF_4B:
-             //unsupported
           case IPHC_TF_1B:
+             ipv6_header->traffic_class     = 0;
+             ipv6_header->traffic_class    |= ((uint8_t) *((uint8_t*)(msg->payload)+ipv6_header->header_length+previousLen)) << 0;
+             ipv6_header->header_length    += sizeof(uint8_t);
+             break;
+          case IPHC_TF_4B:
              //unsupported
           default:
              openserial_printError(

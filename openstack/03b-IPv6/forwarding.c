@@ -164,9 +164,14 @@ owerror_t forwarding_send(OpenQueueEntry_t* msg) {
     }else{
         next_header = IPHC_NH_INLINE;
     }
+    uint8_t tf = IPHC_TF_ELIDED;
+    if(msg->l3_trafficClass != TRAFFIC_CLASS_NORMAL){
+      tf = IPHC_TF_1B;
+    }
     iphc_prependIPv6Header(msg,
-                IPHC_TF_ELIDED,
-                flow_label, // value_flowlabel
+                tf,
+                msg->l3_trafficClass,    // value_trafficClass
+                flow_label,              // value_flowlabel
                 next_header,
                 msg->l4_protocol, // value nh. If compressed this is ignored as LOWPAN_NH is already there.
                 IPHC_HLIM_64,
@@ -273,6 +278,7 @@ void forwarding_receive(
     // populate packets metadata with L3 information
     memcpy(&(msg->l3_destinationAdd),&ipv6_inner_header->dest, sizeof(open_addr_t));
     memcpy(&(msg->l3_sourceAdd),     &ipv6_inner_header->src,  sizeof(open_addr_t));
+    memcpy(&(msg->l3_trafficClass),  &ipv6_inner_header->traffic_class, sizeof(uint8_t));
 
     if (
         (

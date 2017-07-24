@@ -114,6 +114,14 @@ enum {
    STATUS_MAX                          = 11,
 };
 
+// traffic classes
+enum {
+   TRAFFIC_CLASS_NORMAL      = 0x00,
+   TRAFFIC_CLASS_PRIORITY    = 0x01,
+   TRAFFIC_CLASS_EMERGENCY   = 0x02,
+};
+
+
 //component identifiers
 //the order is important because
 enum {
@@ -321,6 +329,7 @@ typedef struct {
    //l3
    open_addr_t   l3_destinationAdd;                             // 128b IPv6 destination (down stack) 
    open_addr_t   l3_sourceAdd;                                  // 128b IPv6 source address 
+   uint8_t       l3_trafficClass;                               // 6b IPv6 traffic class
    //l2
    owerror_t     l2_sendDoneError;                              // outcome of trying to send this packet
    open_addr_t   l2_nextORpreviousHop;                          // 64b IEEE802.15.4 next (down stack) or previous (up) hop address

@@ -178,7 +178,9 @@ void creportasn_task_cb() {
    pkt->l3_destinationAdd.type    = ADDR_128B;
    memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_ringmaster,16);
    
-   pkt->l2_frameType = IEEE154_TYPE_SENSED_DATA;
+   //pkt->l2_frameType = IEEE154_TYPE_SENSED_DATA;
+
+   pkt->l3_trafficClass = TRAFFIC_CLASS_PRIORITY;
 
    // send
    outcome = opencoap_send(
