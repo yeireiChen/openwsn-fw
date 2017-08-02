@@ -202,7 +202,10 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
    INTERRUPT_DECLARATION();
    DISABLE_INTERRUPTS();
 
+   uint8_t smallestTC = 100;
+   uint8_t foundIndex = 100;
     // first to look the sixtop RES packet
+
     for (i=0;i<QUEUELENGTH;i++) {
        if (
            openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
@@ -218,18 +221,54 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
           return &openqueue_vars.queue[i];
        }
     }
-  
+
+    // for (i=0;i<QUEUELENGTH;i++) {
+    //   if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
+    //     packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop) &&
+    //     openqueue_vars.queue[i].l3_trafficClass < smallestTC
+    //     ) {
+    //     foundIndex = i;
+    //     smallestTC = openqueue_vars.queue[i].l3_trafficClass;
+    //   }
+    // }
+
+    //     openserial_printError(123,80,
+    //                         (errorparameter_t)foundIndex,
+    //                         (errorparameter_t)smallestTC);
+    // if (smallestTC > 0 && toNeighbor->type == ADDR_ANYCAST){  //TXRX
+    //   foundIndex = 100;
+    // }
+    // if (foundIndex != 100) {
+    //   ENABLE_INTERRUPTS();
+    //   return &openqueue_vars.queue[foundIndex];
+    // } else {
+    //   ENABLE_INTERRUPTS();
+    //   return NULL;
+    // }
+    
+
+
    if (toNeighbor->type==ADDR_64B) {
+      // TX cell
       // a neighbor is specified, look for a packet unicast to that neigbhbor
       for (i=0;i<QUEUELENGTH;i++) {
          if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
-            packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop)
+            packetfunctions_sameAddress(toNeighbor,&openqueue_vars.queue[i].l2_nextORpreviousHop) &&
+            openqueue_vars.queue[i].l3_trafficClass < smallestTC
           ) {
-            ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
+            foundIndex = i;
+            smallestTC = openqueue_vars.queue[i].l3_trafficClass;
          }
       }
+      if (foundIndex != 100) {
+        ENABLE_INTERRUPTS();
+        return &openqueue_vars.queue[foundIndex];
+      } else {
+        ENABLE_INTERRUPTS();
+        return NULL;
+      }
    } else if (toNeighbor->type==ADDR_ANYCAST) {
+      // TXRX cell
       // anycast case: look for a packet which is either not created by RES
       // or an KA (created by RES, but not broadcast)
       for (i=0;i<QUEUELENGTH;i++) {
@@ -241,27 +280,14 @@ OpenQueueEntry_t* openqueue_macGetDataPacket(open_addr_t* toNeighbor) {
                 )
              )
             ) {
-              if(openqueue_vars.queue[i].creator == COMPONENT_CREPORTASN){
-                continue;
-              }
+            if(openqueue_vars.queue[i].l3_trafficClass > 0){
+              continue;
+            }
             ENABLE_INTERRUPTS();
             return &openqueue_vars.queue[i];
          }
       }
 
-      for (i=0;i<QUEUELENGTH;i++) {
-         if (openqueue_vars.queue[i].owner==COMPONENT_SIXTOP_TO_IEEE802154E &&
-             ( openqueue_vars.queue[i].creator!=COMPONENT_SIXTOP ||
-                (
-                   openqueue_vars.queue[i].creator==COMPONENT_SIXTOP &&
-                   packetfunctions_isBroadcastMulticast(&(openqueue_vars.queue[i].l2_nextORpreviousHop))==FALSE
-                )
-             )
-            ) {
-            ENABLE_INTERRUPTS();
-            return &openqueue_vars.queue[i];
-         }
-      }
    }
    ENABLE_INTERRUPTS();
    return NULL;

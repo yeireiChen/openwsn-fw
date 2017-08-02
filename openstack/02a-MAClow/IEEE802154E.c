@@ -906,10 +906,6 @@ port_INLINE void activity_ti1ORri1() {
          if (schedule_getOkToSend()) {
             schedule_getNeighbor(&neighbor);
             ieee154e_vars.dataToSend = openqueue_macGetDataPacket(&neighbor);
-          
-            if(ieee154e_vars.dataToSend != NULL && (ieee154e_vars.dataToSend->creator == COMPONENT_CREPORTASN || ieee154e_vars.dataToSend->l2_frameType == IEEE154_TYPE_SENSED_DATA) && cellType == CELLTYPE_TXRX){
-               ieee154e_vars.dataToSend = NULL;   
-            }
 
             if ((ieee154e_vars.dataToSend==NULL) && (cellType==CELLTYPE_TXRX)) {
                couldSendEB=TRUE;
