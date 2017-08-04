@@ -11,6 +11,7 @@
 #include "c6t.h"
 #include "cinfo.h"
 #include "cleds.h"
+#include "cjoin.h"
 #include "cwellknown.h"
 #include "rrt.h"
 #include "cgreen.h"
@@ -35,22 +36,23 @@
 void openapps_init(void) {
    //-- 04-TRAN
    opencoap_init();     // initialize before any of the CoAP applications
-   
+
    // CoAP
-   c6t_init();
+   //c6t_init();
    cinfo_init();
    cgreen_init();
    //cexample_init();
    cleds__init();
+   //cjoin_init();
    cwellknown_init();
    rrt_init();
 
    creportasn_init();
-   
+
    // UDP
-   uecho_init();
-   uinject_init();
-   userialbridge_init();
-   uexpiration_init();
-   umonitor_init();
+   //uecho_init();
+   //uinject_init();
+   //userialbridge_init();
+   //uexpiration_init();
+   //umonitor_init();
 }

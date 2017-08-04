@@ -34,8 +34,11 @@ creportasn_vars_t creportasn_vars;
 //=========================== prototypes ======================================
 
 owerror_t creportasn_receive(OpenQueueEntry_t* msg,
-                    coap_header_iht*  coap_header,
-                    coap_option_iht*  coap_options);
+        coap_header_iht*  coap_header,
+        coap_option_iht*  coap_incomingOptions,
+        coap_option_iht*  coap_outgoingOptions,
+        uint8_t*          coap_outgoingOptionsLen);
+
 void    creportasn_timer_cb(opentimers_id_t id);
 void    creportasn_task_cb(void);
 void    creportasn_sendDone(OpenQueueEntry_t* msg,
@@ -44,7 +47,7 @@ void    creportasn_sendDone(OpenQueueEntry_t* msg,
 //=========================== public ==========================================
 
 void creportasn_init() {
-   
+
    // prepare the resource descriptor for the /ex path
    creportasn_vars.desc.path0len             = sizeof(creportasn_path0)-1;
    creportasn_vars.desc.path0val             = (uint8_t*)(&creportasn_path0);
@@ -54,17 +57,17 @@ void creportasn_init() {
    creportasn_vars.desc.discoverable         = TRUE;
    creportasn_vars.desc.callbackRx           = &creportasn_receive;
    creportasn_vars.desc.callbackSendDone     = &creportasn_sendDone;
-   
+
    creportasn_vars.creportasn_sequence = 0;
    creportasn_vars.lastSuccessLeft = 0;
    creportasn_vars.errorCounter = 0;
-   
+
    opencoap_register(&creportasn_vars.desc);
    creportasn_vars.timerId    = opentimers_create();
    opentimers_scheduleIn(
-     creportasn_vars.timerId, 
-     CREPORTASNPERIOD, 
-     TIME_MS, 
+     creportasn_vars.timerId,
+     CREPORTASNPERIOD,
+     TIME_MS,
      TIMER_PERIODIC,
      creportasn_timer_cb
    );
@@ -74,8 +77,10 @@ void creportasn_init() {
 //=========================== private =========================================
 
 owerror_t creportasn_receive(OpenQueueEntry_t* msg,
-                      coap_header_iht* coap_header,
-                      coap_option_iht* coap_options) {
+        coap_header_iht*  coap_header,
+        coap_option_iht*  coap_incomingOptions,
+        coap_option_iht*  coap_outgoingOptions,
+        uint8_t*          coap_outgoingOptionsLen) {
    return E_FAIL;
 }
 
@@ -88,10 +93,11 @@ void creportasn_timer_cb(opentimers_id_t id){
 void creportasn_task_cb() {
    OpenQueueEntry_t*    pkt;
    owerror_t            outcome;
-   
+   coap_option_iht      options[2];
+
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;
-   
+
    // don't run on dagroot
    if (idmanager_getIsDAGroot()) {
       //opentimers_stop(creportasn_vars.timerId);
@@ -146,7 +152,7 @@ void creportasn_task_cb() {
    uint8_t parentTx;
    uint8_t parentTxACK;
    neighbors_getParentTxTxACK(&parentTx, &parentTxACK, parentIndex);
-   
+
    pkt->payload[15] = parentTx;
    pkt->payload[16] = parentTxACK;
 
@@ -156,46 +162,42 @@ void creportasn_task_cb() {
    creportasn_vars.creportasn_sequence++;
 
    pkt->payload[19] = creportasn_vars.creportasn_sequence;
-   
-   packetfunctions_reserveHeaderSize(pkt,1);
-   pkt->payload[0] = COAP_PAYLOAD_MARKER;
-   
 
-   // content-type option
-   packetfunctions_reserveHeaderSize(pkt,2);
-   pkt->payload[0]                = (COAP_OPTION_NUM_CONTENTFORMAT - COAP_OPTION_NUM_URIPATH) << 4
-                                    | 1;
-   pkt->payload[1]                = COAP_MEDTYPE_APPOCTETSTREAM;
-   // location-path option
+   // set location-path option
+   options[0].type = COAP_OPTION_NUM_URIPATH;
+   options[0].length = sizeof(creportasn_path0) - 1;
+   options[0].pValue = (uint8_t *) creportasn_path0;
 
-   packetfunctions_reserveHeaderSize(pkt,sizeof(creportasn_path0)-1);
-   memcpy(&pkt->payload[0],creportasn_path0,sizeof(creportasn_path0)-1);
-   packetfunctions_reserveHeaderSize(pkt,1);
-   pkt->payload[0]                = ((COAP_OPTION_NUM_URIPATH) << 4) | (sizeof(creportasn_path0)-1);
-   
+   // set content-type option
+   uint8_t medtype = COAP_MEDTYPE_APPOCTETSTREAM;
+   options[1].type = COAP_OPTION_NUM_CONTENTFORMAT;
+   options[1].length = 1;
+   options[1].pValue = &medtype;
+
    // metadata
    pkt->l4_destination_port       = WKP_UDP_COAP;
    pkt->l3_destinationAdd.type    = ADDR_128B;
-   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_ringmaster,16);
-   
-   //pkt->l2_frameType = IEEE154_TYPE_SENSED_DATA;
+   memcpy(&pkt->l3_destinationAdd.addr_128b[0],&ipAddr_motesEecs,16);
 
    pkt->l3_trafficClass = TRAFFIC_CLASS_PRIORITY;
+
 
    // send
    outcome = opencoap_send(
       pkt,
       COAP_TYPE_NON,
       COAP_CODE_REQ_PUT,
-      1,
+      1, // token len
+      options,
+      2, // options len
       &creportasn_vars.desc
    );
-   
+
    // avoid overflowing the queue if fails
    if (outcome==E_FAIL) {
       openqueue_freePacketBuffer(pkt);
    }
-   
+
    return;
 }
 

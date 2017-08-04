@@ -111,7 +111,8 @@ enum {
    STATUS_QUEUE                        =  8,
    STATUS_NEIGHBORS                    =  9,
    STATUS_KAPERIOD                     = 10,
-   STATUS_MAX                          = 11,
+   STATUS_JOINED                       = 11,
+   STATUS_MAX                          = 12,
 };
 
 // traffic classes
@@ -138,11 +139,11 @@ enum {
    //MAClow
    COMPONENT_IEEE802154                = 0x08,
    COMPONENT_IEEE802154E               = 0x09,
-   
+
    // all components with higher component id than COMPONENT_IEEE802154E
-   // won't be able to get free packets from the queue 
+   // won't be able to get free packets from the queue
    // when the mote is not synch
-   
+
    //MAClow<->MAChigh ("virtual components")
    COMPONENT_SIXTOP_TO_IEEE802154E     = 0x0a,
    COMPONENT_IEEE802154E_TO_SIXTOP     = 0x0b,
@@ -182,6 +183,8 @@ enum {
    COMPONENT_USERIALBRIDGE             = 0x28,
    COMPONENT_UEXPIRATION               = 0x29,
    COMPONENT_UMONITOR                  = 0x2a,
+   COMPONENT_CJOIN                     = 0x2b,
+   COMPONENT_OPENOSCOAP                = 0x2c,
 
    // custom
    COMPONENT_CGREEN                    = 0x50,
@@ -201,7 +204,7 @@ enum {
    ERR_RCVD_ECHO_REPLY                 = 0x02, // received an echo reply
    ERR_GETDATA_ASKS_TOO_FEW_BYTES      = 0x03, // getData asks for too few bytes, maxNumBytes={0}, fill level={1}
    ERR_INPUT_BUFFER_OVERFLOW           = 0x04, // the input buffer has overflown
-   ERR_COMMAND_NOT_ALLOWED             = 0x05, // the command is not allowed, command = {0} 
+   ERR_COMMAND_NOT_ALLOWED             = 0x05, // the command is not allowed, command = {0}
    // l4
    ERR_WRONG_TRAN_PROTOCOL             = 0x06, // unknown transport protocol {0} (code location {1})
    ERR_WRONG_TCP_STATE                 = 0x07, // wrong TCP state {0} (code location {1})
@@ -268,8 +271,15 @@ enum {
    ERR_UNSUPPORTED_FORMAT              = 0x40, // the received packet format is not supported {code location {0}}
    ERR_UNSUPPORTED_METADATA            = 0x41, // the metadata type is not suppored
    //l3
-   ERR_6LORH_DEADLINE_EXPIRED		       = 0x42, // the received packet has expired
+   ERR_6LORH_DEADLINE_EXPIRED	       = 0x42, // the received packet has expired
    ERR_6LORH_DEADLINE_DROPPED          = 0x43, // packet expiry time reached, dropped
+   // join and OSCOAP
+   ERR_JOINED                          = 0x44, // node joined
+   ERR_SEQUENCE_NUMBER_OVERFLOW        = 0x45, // OSCOAP sequence number reached maximum value
+   ERR_BUFFER_OVERFLOW                 = 0x46, // OSCOAP buffer overflow detected {code location {0}}
+   ERR_REPLAY_FAILED                   = 0x47, // OSCOAP replay protection failed
+   ERR_DECRYPTION_FAILED               = 0x48, // OSCOAP decryption and tag verification failed
+   ERR_ABORT_JOIN_PROCESS              = 0x49, // Aborted join process {code location {0}}
 };
 
 //=========================== typedef =========================================
@@ -327,8 +337,8 @@ typedef struct {
    uint8_t*      l4_payload;                                    // pointer to the start of the payload of l4 (used for retransmits)
    uint8_t       l4_length;                                     // length of the payload of l4 (used for retransmits)
    //l3
-   open_addr_t   l3_destinationAdd;                             // 128b IPv6 destination (down stack) 
-   open_addr_t   l3_sourceAdd;                                  // 128b IPv6 source address 
+   open_addr_t   l3_destinationAdd;                             // 128b IPv6 destination (down stack)
+   open_addr_t   l3_sourceAdd;                                  // 128b IPv6 source address
    uint8_t       l3_trafficClass;                               // 6b IPv6 traffic class
    //l2
    owerror_t     l2_sendDoneError;                              // outcome of trying to send this packet
@@ -374,6 +384,7 @@ typedef struct {
 BEGIN_PACK
 typedef struct {
    bool             used;
+   bool             insecure;
    uint8_t          parentPreference;
    bool             stableNeighbor;
    uint8_t          switchStabilityCounter;
