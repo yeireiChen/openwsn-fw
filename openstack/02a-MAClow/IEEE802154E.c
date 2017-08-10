@@ -774,7 +774,7 @@ port_INLINE bool ieee154e_processIEs(OpenQueueEntry_t* pkt, uint16_t* lenIE) {
         infer the asnOffset based on the fact that
         ieee154e_vars.freq = 11 + (asnOffset + channelOffset)%16 
         */
-        for (i=0;i<16;i++){
+        for (i=0;i<NUM_CHANNELS;i++){
             if ((ieee154e_vars.freq - 11)==ieee154e_vars.chTemplate[i]){
                 break;
             }
@@ -2461,7 +2461,7 @@ port_INLINE void ieee154e_syncSlotOffset() {
     infer the asnOffset based on the fact that
     ieee154e_vars.freq = 11 + (asnOffset + channelOffset)%16 
     */
-    for (i=0;i<16;i++){
+    for (i=0;i<NUM_CHANNELS;i++){
         if ((ieee154e_vars.freq - 11)==ieee154e_vars.chTemplate[i]){
             break;
         }
@@ -2711,7 +2711,7 @@ port_INLINE uint8_t calculateFrequency(uint8_t channelOffset) {
         return ieee154e_vars.singleChannel; // single channel
     } else {
         // channel hopping enabled, use the channel depending on hopping template
-        return 11 + ieee154e_vars.chTemplate[(ieee154e_vars.asnOffset+channelOffset)%16];
+        return 11 + ieee154e_vars.chTemplate[(ieee154e_vars.asnOffset+channelOffset)%NUM_CHANNELS];
     }
     //return 11+(ieee154e_vars.asnOffset+channelOffset)%16; //channel hopping
 }
