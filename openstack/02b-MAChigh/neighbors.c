@@ -783,8 +783,9 @@ bool isThisRowMatching(open_addr_t* address, uint8_t rowNumber) {
    }
 }
 
-void neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, uint8_t index){
+void neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, int8_t* parentRssi, uint8_t index){
   *(numTx) = neighbors_vars.neighbors[index].numTx;
   *(numTxACK) = neighbors_vars.neighbors[index].numTxACK;
+  *(parentRssi) = neighbors_vars.neighbors[index].rssi;
   return;
 }

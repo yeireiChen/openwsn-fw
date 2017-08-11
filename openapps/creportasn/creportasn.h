@@ -18,6 +18,7 @@ typedef struct {
    uint8_t              creportasn_sequence;
    uint8_t              lastSuccessLeft;
    uint8_t              errorCounter;
+   uint8_t              lastCallbackSequence;
 
 } creportasn_vars_t;
 

@@ -23,7 +23,7 @@
 
 /// inter-packet period (in ms)
 #define CREPORTASNPERIOD  20000
-#define PAYLOADLEN      20
+#define PAYLOADLEN      22
 
 const uint8_t creportasn_path0[] = "reportasn";
 
@@ -58,6 +58,7 @@ void creportasn_init() {
    creportasn_vars.creportasn_sequence = 0;
    creportasn_vars.lastSuccessLeft = 0;
    creportasn_vars.errorCounter = 0;
+   creportasn_vars.lastCallbackSequence = 0;
    
    opencoap_register(&creportasn_vars.desc);
    creportasn_vars.timerId    = opentimers_create();
@@ -142,10 +143,10 @@ void creportasn_task_cb() {
 
    icmpv6rpl_getPreferredParentIndex(&parentIndex);
 
-   neighborRow_t parentRow;
    uint8_t parentTx;
    uint8_t parentTxACK;
-   neighbors_getParentTxTxACK(&parentTx, &parentTxACK, parentIndex);
+   int8_t parentRssi;
+   neighbors_getParentTxTxACK(&parentTx, &parentTxACK, &parentRssi, parentIndex);
    
    pkt->payload[15] = parentTx;
    pkt->payload[16] = parentTxACK;
@@ -156,6 +157,9 @@ void creportasn_task_cb() {
    creportasn_vars.creportasn_sequence++;
 
    pkt->payload[19] = creportasn_vars.creportasn_sequence;
+   pkt->payload[20] = creportasn_vars.lastCallbackSequence;
+
+   pkt->payload[21] = parentRssi;
    
    packetfunctions_reserveHeaderSize(pkt,1);
    pkt->payload[0] = COAP_PAYLOAD_MARKER;
@@ -204,5 +208,6 @@ void creportasn_sendDone(OpenQueueEntry_t* msg, owerror_t error) {
       creportasn_vars.errorCounter++;
    }
    creportasn_vars.lastSuccessLeft = msg->l2_retriesLeft;
+   creportasn_vars.lastCallbackSequence = creportasn_vars.creportasn_sequence;
    openqueue_freePacketBuffer(msg);
 }

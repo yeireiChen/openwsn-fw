@@ -97,8 +97,7 @@ void          neighbors_removeOld(void);
 // debug
 bool          debugPrint_neighbors(void);
 
-void          neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, uint8_t index);
-
+void          neighbors_getParentTxTxACK(uint8_t* numTx, uint8_t* numTxACK, int8_t* parentRssi, uint8_t index);
 /**
 \}
 \}
