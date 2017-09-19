@@ -18,6 +18,7 @@
 
 #include "neighbors.h"
 #include "icmpv6rpl.h"
+#include "sensors.h"
 
 //=========================== defines =========================================
 
@@ -89,6 +90,19 @@ void creportasn_timer_cb(opentimers_id_t id){
 void creportasn_task_cb() {
    OpenQueueEntry_t*    pkt;
    owerror_t            outcome;
+
+    callbackRead_cbt callbackT;
+   uint16_t             temp=0;
+   uint8_t             array[2];
+
+   callbackT = sensors_getCallbackRead(SENSOR_TEMPERATURE);
+   temp = callbackT();
+   array[0] = temp & 0xff;
+   array[1] = (temp >> 8);
+   opentimer_reset();
+
+   openserial_printError(array[1],array[0],(errorparameter_t)0, (errorparameter_t)0);
+
    
    // don't run if not synch
    if (ieee154e_isSynch() == FALSE) return;

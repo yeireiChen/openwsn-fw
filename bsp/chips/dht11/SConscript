@@ -1,0 +1,8 @@
+Import('env')
+
+localEnv = env.Clone()
+
+source = ['dht11.c']
+dht11  = localEnv.Object(source=source)
+
+Return('dht11')

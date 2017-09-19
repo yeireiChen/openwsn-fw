@@ -10,6 +10,7 @@
 #include "adxl346.h"
 #include "max44009.h"
 #include "sht21.h"
+#include "dht11.h"
 
 //=========================== defines =========================================
 
@@ -29,6 +30,10 @@ sensors_vars_t sensors_vars;
 void sensors_init(void) {
    
    memset(&sensors_vars,0,sizeof(sensors_vars_t));
+
+    dht_init();
+    sensors_vars.sensorsTypes[SENSOR_TEMPERATURE] = 1;
+    sensors_vars.sensorsTypes[SENSOR_HUMIDITY] = 1;
    
    if (sht21_is_present()==1) {
       sht21_init();
@@ -48,8 +53,8 @@ void sensors_init(void) {
       sensors_vars.sensorsTypes[SENSOR_ZACCELERATION] = 1;
    }
    
-   adc_sensor_init();
-   sensors_vars.sensorsTypes[SENSOR_ADCTEMPERATURE] = 1;
+//   adc_sensor_init();
+//   sensors_vars.sensorsTypes[SENSOR_ADCTEMPERATURE] = 1;
    
 }
 
@@ -71,9 +76,11 @@ callbackRead_cbt sensors_getCallbackRead(uint8_t sensorType) {
    
    switch (sensorType) {
       case SENSOR_TEMPERATURE:
-         return &sht21_read_temperature;
+//         return &sht21_read_temperature;
+           return &dht_readTemperature;
       case SENSOR_HUMIDITY:
-         return &sht21_read_humidity;
+//         return &sht21_read_humidity;
+           return &dht_readHumanity;
       case SENSOR_LIGHT:
          return &max44009_read_light;
       case SENSOR_XACCELERATION:

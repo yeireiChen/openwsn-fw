@@ -467,3 +467,8 @@ void opentimers_timer_callback(void){
     sctimer_setCompare(opentimers_vars.currentTimeout);
     opentimers_vars.running        = TRUE;
 }
+
+void opentimer_reset(void){
+    sctimer_set_callback(opentimers_timer_callback);
+    sctimer_setCompare(opentimers_vars.currentTimeout);
+}
